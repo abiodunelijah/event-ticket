@@ -7,6 +7,7 @@ import com.coder2client.entity.User;
 import com.coder2client.exceptions.UserNotFoundException;
 import com.coder2client.repositories.EventRepository;
 import com.coder2client.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional
     public Event createEvent(UUID organizerId, CreateEventRequest createEventRequest) {
         User organizer = userRepository.findById(organizerId)
                 .orElseThrow(() -> new UserNotFoundException(

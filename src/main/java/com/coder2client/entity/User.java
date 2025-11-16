@@ -32,7 +32,7 @@ public class User {
     private String email;
 
     @OneToMany(mappedBy = "organizer", cascade = CascadeType.ALL)
-    private List<User> organizedEvents = new ArrayList<>();
+    private List<Event> organizedEvents = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(
