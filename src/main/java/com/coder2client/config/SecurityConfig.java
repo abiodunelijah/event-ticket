@@ -16,7 +16,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http, UserProvisioningFilter provisioningFilter) throws Exception {
         http.authorizeHttpRequests(authorizeRequests ->
-                authorizeRequests.anyRequest().authenticated())
+
+                authorizeRequests.anyRequest().permitAll())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
