@@ -18,6 +18,30 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(EventUpdateException.class)
+    public ResponseEntity<ErrorDto> handleEventUpdateException(EventUpdateException eventUpdateException) {
+        log.error("Caught EventUpdateException", eventUpdateException);
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setError("Unable to update event.");
+        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(TicketTypeNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleTicketTypeNotFoundException(TicketTypeNotFoundException ticketTypeNotFoundException) {
+        log.error("Caught TicketTypeNotFoundException", ticketTypeNotFoundException);
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setError("Ticket Type not found");
+        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(EventNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleEventNotFoundException(EventNotFoundException eventNotFoundException) {
+        log.error("Caught EventNotFoundException", eventNotFoundException);
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setError("Event not found");
+        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorDto> handleUserNotFoundException(UserNotFoundException userNotFoundException) {
         log.error("Caught UserNotFoundException", userNotFoundException);

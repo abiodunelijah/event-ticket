@@ -1,18 +1,24 @@
 package com.coder2client.services;
 
 import com.coder2client.dtos.CreateEventRequest;
+import com.coder2client.dtos.UpdateEventRequest;
+import com.coder2client.dtos.UpdateTicketTypeRequest;
 import com.coder2client.entity.Event;
 import com.coder2client.entity.TicketType;
 import com.coder2client.entity.User;
+import com.coder2client.exceptions.EventNotFoundException;
+import com.coder2client.exceptions.EventUpdateException;
 import com.coder2client.exceptions.UserNotFoundException;
 import com.coder2client.repositories.EventRepository;
 import com.coder2client.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -53,4 +59,52 @@ public class EventServiceImpl implements EventService {
 
         return eventRepository.save(eventToCreate);
     }
+
+    @Override
+    public Page<Event> listEventsForOrganizer(UUID organizerId, Pageable pageable) {
+       return eventRepository.findByOrganizerId(organizerId, pageable);
+    }
+
+    @Override
+    public Optional<Event> getEventForOrganizer(UUID organizerId, UUID id) {
+        return eventRepository.findByIdAndOrganizerId(id, organizerId);
+    }
+
+    @Override
+    public Event updateEventForOrganizer(UUID organizerId, UUID id, UpdateEventRequest updateEventRequest) {
+
+        if (updateEventRequest.getId() == null){
+             throw new EventUpdateException("Event ID cannot be null");
+        }
+
+        if (!id.equals(updateEventRequest.getId())){
+            throw new EventUpdateException("Cannot update the ID of an Event.");
+        }
+
+        Event existingEvent = eventRepository.findByIdAndOrganizerId(id, organizerId)
+                .orElseThrow(() -> new EventNotFoundException(String.format("Event with '%s' does not exist", id)));
+
+        existingEvent.setName(updateEventRequest.getName());
+        existingEvent.setStart(updateEventRequest.getStart());
+        existingEvent.setEnd(updateEventRequest.getEnd());
+        existingEvent.setVenue(updateEventRequest.getVenue());
+        existingEvent.setSalesStart(updateEventRequest.getSalesStart());
+        existingEvent.setSalesEnd(updateEventRequest.getSalesEnd());
+        existingEvent.setStatus(updateEventRequest.getStatus());
+
+        Set<UUID> requestTicketTypeIds = updateEventRequest.getTicketTypes()
+                .stream()
+                .map(UpdateTicketTypeRequest::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        existingEvent.getTicketTypes()
+                .removeIf(existingTicketType -> !requestTicketTypeIds.contains(existingTicketType.getId()));
+    }
+
+
+
+
+
+
 }
