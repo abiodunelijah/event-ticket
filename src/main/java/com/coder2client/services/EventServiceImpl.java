@@ -100,6 +100,8 @@ public class EventServiceImpl implements EventService {
 
         existingEvent.getTicketTypes()
                 .removeIf(existingTicketType -> !requestTicketTypeIds.contains(existingTicketType.getId()));
+
+        return null;
     }
 
 

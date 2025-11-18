@@ -39,7 +39,7 @@ public class EventController {
 
 
     @GetMapping
-    public ResponseEntity<Page<List<ListEventResponseDto>>> listEvents(@AuthenticationPrincipal Jwt jwt, Pageable pageable){
+    public ResponseEntity<Page<ListEventResponseDto>> listEvents(@AuthenticationPrincipal Jwt jwt, Pageable pageable){
         UUID userId = parseUserId(jwt);
         Page<Event> events = eventService.listEventsForOrganizer(userId, pageable);
         return ResponseEntity.ok(events.map(eventMapper::toListEventResponseDto));
