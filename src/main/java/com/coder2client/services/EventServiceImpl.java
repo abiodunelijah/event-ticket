@@ -8,6 +8,7 @@ import com.coder2client.entity.TicketType;
 import com.coder2client.entity.User;
 import com.coder2client.exceptions.EventNotFoundException;
 import com.coder2client.exceptions.EventUpdateException;
+import com.coder2client.exceptions.TicketTypeNotFoundException;
 import com.coder2client.exceptions.UserNotFoundException;
 import com.coder2client.repositories.EventRepository;
 import com.coder2client.repositories.UserRepository;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,6 +73,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public Event updateEventForOrganizer(UUID organizerId, UUID id, UpdateEventRequest updateEventRequest) {
 
         if (updateEventRequest.getId() == null){
@@ -101,12 +104,41 @@ public class EventServiceImpl implements EventService {
         existingEvent.getTicketTypes()
                 .removeIf(existingTicketType -> !requestTicketTypeIds.contains(existingTicketType.getId()));
 
-        return null;
+        Map<UUID, TicketType> existingTicketTypeIndex = existingEvent.getTicketTypes().stream()
+                .collect(Collectors.toMap(TicketType::getId, Function.identity()));
+
+        for (UpdateTicketTypeRequest ticketTypeRequest : updateEventRequest.getTicketTypes()){
+            if (ticketTypeRequest.getId() == null){
+                //create
+                TicketType ticketTypeToCreate = new TicketType();
+                ticketTypeToCreate.setName(ticketTypeRequest.getName());
+                ticketTypeToCreate.setPrice(ticketTypeRequest.getPrice());
+                ticketTypeToCreate.setDescription(ticketTypeRequest.getDescription());
+                ticketTypeToCreate.setEvent(existingEvent);
+                existingEvent.getTicketTypes().add(ticketTypeToCreate);
+
+            }else if (existingTicketTypeIndex.containsKey(ticketTypeRequest.getId())){
+                //update
+                TicketType existinTicketType = existingTicketTypeIndex.get(ticketTypeRequest.getId());
+                existinTicketType.setName(ticketTypeRequest.getName());
+                existinTicketType.setPrice(ticketTypeRequest.getPrice());
+                existinTicketType.setDescription(ticketTypeRequest.getDescription());
+                existinTicketType.setTotalAvailable(ticketTypeRequest.getTotalAvailable());
+
+            }else {
+                throw new TicketTypeNotFoundException(String.format("Ticket Type with ID '%s' does not exist.", ticketTypeRequest.getId()));
+            }
+        }
+
+        return eventRepository.save(existingEvent);
     }
 
+    @Override
+    @Transactional
+    public void deleteEventForOrganizer(UUID organizerId, UUID id) {
 
+        getEventForOrganizer(organizerId, id).ifPresent(eventRepository::delete);
 
-
-
+    }
 
 }
