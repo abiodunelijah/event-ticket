@@ -3,6 +3,7 @@ package com.coder2client.config;
 import com.coder2client.filters.UserProvisioningFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -14,14 +15,20 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(
-            HttpSecurity http, UserProvisioningFilter provisioningFilter) throws Exception {
+            HttpSecurity http,
+            UserProvisioningFilter provisioningFilter,
+            JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+
         http.authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests.anyRequest().authenticated())  // ← Require authentication
+                        authorizeRequests
+                                .requestMatchers(HttpMethod.GET, "api/v1/published-events/**").permitAll()
+                                .requestMatchers("/api/v1/events").hasRole("ORGANIZER")
+                                .anyRequest().authenticated())  // ← Require authentication
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .oauth2ResourceServer(oauth2 ->
-                        oauth2.jwt(Customizer.withDefaults()))
+                        oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .addFilterAfter(provisioningFilter, BearerTokenAuthenticationFilter.class);
 
         return http.build();

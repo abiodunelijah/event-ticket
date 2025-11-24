@@ -6,6 +6,7 @@ import com.coder2client.dtos.UpdateTicketTypeRequest;
 import com.coder2client.entity.Event;
 import com.coder2client.entity.TicketType;
 import com.coder2client.entity.User;
+import com.coder2client.enums.EventStatusEnum;
 import com.coder2client.exceptions.EventNotFoundException;
 import com.coder2client.exceptions.EventUpdateException;
 import com.coder2client.exceptions.TicketTypeNotFoundException;
@@ -139,6 +140,21 @@ public class EventServiceImpl implements EventService {
 
         getEventForOrganizer(organizerId, id).ifPresent(eventRepository::delete);
 
+    }
+
+    @Override
+    public Page<Event> listPublishedEvents(Pageable pageable) {
+        return eventRepository.findByStatus(EventStatusEnum.PUBLISHED, pageable);
+    }
+
+    @Override
+    public Page<Event> searchPublishedEvents(String query, Pageable pageable) {
+        return eventRepository.searchEvents(query, pageable);
+    }
+
+    @Override
+    public Optional<Event> getPublishedEvent(UUID uuid) {
+        return eventRepository.findByIdAndStatus(uuid, EventStatusEnum.PUBLISHED);
     }
 
 }
