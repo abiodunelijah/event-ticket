@@ -4,6 +4,7 @@ import com.coder2client.entity.QrCode;
 import com.coder2client.entity.Ticket;
 import com.coder2client.enums.QrCodeStatusEnum;
 import com.coder2client.exceptions.QrCodeGenerationException;
+import com.coder2client.exceptions.QrCodeNotFoundException;
 import com.coder2client.repositories.QrCodeRepository;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -11,6 +12,7 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QrCodeServiceImpl implements QrCodeService {
@@ -53,7 +56,14 @@ public class QrCodeServiceImpl implements QrCodeService {
 
     @Override
     public byte[] getQrCodeImageForUserAndTicket(UUID userId, UUID ticketId) {
+        QrCode qrCode = qrCodeRepository.findByTicketIdAndTicketPurchaserId(ticketId, userId).orElseThrow(QrCodeNotFoundException::new);
 
+        try{
+            return Base64.getDecoder().decode(qrCode.getValue());
+        }catch (IllegalArgumentException illegalArgumentException){
+            log.error("Invalid base64 QR Code for ticket ID:{}", ticketId, illegalArgumentException);
+            throw new QrCodeNotFoundException();
+        }
 
     }
 
